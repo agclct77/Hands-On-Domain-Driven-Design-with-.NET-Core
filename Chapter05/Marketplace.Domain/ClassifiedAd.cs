@@ -2,6 +2,9 @@
 
 namespace Marketplace.Domain
 {
+    /// <summary>
+    /// 分類廣告
+    /// </summary>
     public class ClassifiedAd : Entity<ClassifiedAdId>
     {
         public ClassifiedAdId Id { get; private set; }
@@ -20,6 +23,7 @@ namespace Marketplace.Domain
             });
 
         public void SetTitle(ClassifiedAdTitle title) =>
+            // 呼叫Entity<T> 的Apply()，會將ClassifiedAdTitleChanged事件加入 _changes
             Apply(new Events.ClassifiedAdTitleChanged
             {
                 Id = Id,
@@ -44,8 +48,13 @@ namespace Marketplace.Domain
         public void RequestToPublish() =>
             Apply(new Events.ClassidiedAdSentForReview {Id = Id});
 
+        /// <summary>
+        /// 覆寫事件處理
+        /// </summary>
+        /// <param name="event"></param>
         protected override void When(object @event)
         {
+            // 這裡的 @event 是從 Apply() 傳入的
             switch (@event)
             {
                 case Events.ClassifiedAdCreated e:
@@ -53,9 +62,12 @@ namespace Marketplace.Domain
                     OwnerId = new UserId(e.OwnerId);
                     State = ClassifiedAdState.Inactive;
                     break;
+
+                // 如果事件是 ClassifiedAdTitleChanged，就更新Title
                 case Events.ClassifiedAdTitleChanged e:
                     Title = new ClassifiedAdTitle(e.Title);
                     break;
+                
                 case Events.ClassifiedAdTextUpdated e:
                     Text = new ClassifiedAdText(e.AdText);
                     break;
@@ -68,6 +80,10 @@ namespace Marketplace.Domain
             }
         }
 
+        /// <summary>
+        /// 覆寫 EnsureValidState()，檢查狀態是否正確
+        /// </summary>
+        /// <exception cref="InvalidEntityStateException"></exception>
         protected override void EnsureValidState()
         {
             var valid =
