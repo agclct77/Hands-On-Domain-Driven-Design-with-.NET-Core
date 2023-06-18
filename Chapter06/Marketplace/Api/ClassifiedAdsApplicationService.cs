@@ -9,53 +9,63 @@ namespace Marketplace.Api
     public class ClassifiedAdsApplicationService
         : IApplicationService
     {
+        /// <summary>
+        ///   The repository is injected into the application service.
+        /// </summary>
         private readonly IClassifiedAdRepository _repository;
+
+        /// <summary>
+        ///  The currency lookup is injected into the application service.
+        /// </summary>
         private readonly ICurrencyLookup _currencyLookup;
 
-        public ClassifiedAdsApplicationService(
-            IClassifiedAdRepository repository,
-            ICurrencyLookup currencyLookup
-        )
+        /// <summary>
+        ///    Constructor
+        /// </summary>
+        /// <param name="repository">repository</param>
+        /// <param name="currencyLookup">currency lookup</param>
+        public ClassifiedAdsApplicationService(IClassifiedAdRepository repository, ICurrencyLookup currencyLookup)
         {
             _repository = repository;
             _currencyLookup = currencyLookup;
         }
 
+        /// <summary>
+        ///  This is the method that handles the commands.
+        /// </summary>
+        /// <param name="command">command</param>
+        /// <returns></returns>
         public Task Handle(object command) =>
+            // Pattern matching
             command switch
             {
                 V1.Create cmd =>
                     HandleCreate(cmd),
+
                 V1.SetTitle cmd =>
                     HandleUpdate(
                         cmd.Id,
-                        c => c.SetTitle(
-                            ClassifiedAdTitle.FromString(cmd.Title)
-                        )
+                        c => c.SetTitle(ClassifiedAdTitle.FromString(cmd.Title))
                     ),
+
                 V1.UpdateText cmd =>
                     HandleUpdate(
                         cmd.Id,
-                        c => c.UpdateText(
-                            ClassifiedAdText.FromString(cmd.Text)
-                        )
+                        c => c.UpdateText(ClassifiedAdText.FromString(cmd.Text))
                     ),
+
                 V1.UpdatePrice cmd =>
                     HandleUpdate(
                         cmd.Id,
-                        c => c.UpdatePrice(
-                            Price.FromDecimal(
-                                cmd.Price,
-                                cmd.Currency,
-                                _currencyLookup
-                            )
-                        )
+                        c => c.UpdatePrice(Price.FromDecimal(cmd.Price, cmd.Currency, _currencyLookup))
                     ),
+
                 V1.RequestToPublish cmd =>
                     HandleUpdate(
                         cmd.Id,
                         c => c.RequestToPublish()
                     ),
+
                 _ => Task.CompletedTask
             };
 
